@@ -1,2 +1,0 @@
-# SiGeKo
-Checklists

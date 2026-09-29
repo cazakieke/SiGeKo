@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SiGeKompass - Erd-, Tief- & Gründungsarbeiten</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 10px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #333; margin-bottom: 5px; font-size: 24px; }
+        .subtitle { color: #666; margin-bottom: 20px; font-size: 14px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; flex-wrap: wrap; }
+        .tab { padding: 12px 20px; background: #f0f0f0; border: none; cursor: pointer; border-radius: 5px 5px 0 0; font-size: 16px; transition: all 0.3s; }
+        .tab:hover { background: #e0e0e0; }
+        .tab.active { background: #FF9800; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .project-info { background: #fff3e0; padding: 15px; margin-bottom: 20px; border-radius: 5px; border-left: 4px solid #FF9800; }
+        .project-info input, .project-info select { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }
+        .checklist-section { border: 1px solid #ddd; margin-bottom: 15px; border-radius: 5px; overflow: hidden; }
+        .section-header { background: #FF9800; color: white; padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .section-header:hover { background: #F57C00; }
+        .section-content { display: none; padding: 15px; }
+        .section-content.active { display: block; }
+        .checklist-item { background: #fafafa; border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 15px; border-radius: 5px; position: relative; }
+        .status-badge { position: absolute; top: 10px; right: 10px; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        .status-offen { background: #FFC107; color: #000; }
+        .status-erfuellt { background: #4CAF50; color: white; }
+        .status-nicht-erfuellt { background: #F44336; color: white; }
+        .status-nicht-anwendbar { background: #9E9E9E; color: white; }
+        .phase-badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 8px; }
+        .phase-planung { background: #E3F2FD; color: #1565C0; }
+        .phase-ausfuehrung { background: #FFF3E0; color: #E65100; }
+        .item-title { font-weight: bold; color: #2c3e50; margin-bottom: 10px; font-size: 16px; padding-right: 120px; }
+        .item-description { color: #555; margin-bottom: 15px; font-size: 14px; line-height: 1.5; }
+        .status-group { margin: 15px 0; }
+        .status-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        .radio-group { display: flex; flex-wrap: wrap; gap: 15px; margin: 10px 0; }
+        .radio-group label { display: flex; align-items: center; font-weight: normal; cursor: pointer; }
+        .radio-group input[type="radio"] { margin-right: 5px; cursor: pointer; }
+        input[type="text"], input[type="date"], textarea, select { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        textarea { min-height: 80px; resize: vertical; }
+        .photo-section { margin: 15px 0; }
+        .photo-button { background: #2196F3; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .photo-button:hover { background: #0b7dda; }
+        .photo-preview { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .photo-item { position: relative; width: 150px; height: 150px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-info { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 5px; font-size: 10px; }
+        .remove-photo { position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-weight: bold; }
+        .action-plan { background: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin: 10px 0; display: none; }
+        .action-plan.show { display: block; }
+        .history-section { background: #ffe0b2; padding: 10px; margin: 15px 0; border-radius: 4px; border-left: 4px solid #FF9800; }
+        .history-entry { background: white; padding: 10px; margin: 8px 0; border-radius: 4px; border-left: 3px solid #FF5722; }
+        .history-header { font-weight: bold; color: #E65100; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .history-content { font-size: 13px; color: #555; margin-top: 5px; }
+        .history-toggle { background: #FF9800; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 10px; }
+        .save-button { background: #FF9800; color: white; padding: 15px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 20px; }
+        .save-button:hover { background: #F57C00; }
+        .export-button { background: #795548; color: white; padding: 15px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 10px; }
+        .export-button:hover { background: #5D4037; }
+        .applicability-section { background: #fff3e0; padding: 15px; margin-bottom: 20px; border-radius: 5px; border-left: 4px solid #FF9800; }
+        .field-group { margin: 10px 0; }
+        .field-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; }
+        .history-list { max-height: 600px; overflow-y: auto; }
+        .project-card { background: white; padding: 15px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd; cursor: pointer; transition: all 0.3s; }
+        .project-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); transform: translateY(-2px); }
+        .project-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+        .project-card-title { font-weight: bold; font-size: 18px; color: #333; }
+        .project-card-date { color: #666; font-size: 14px; }
+        .project-card-stats { display: flex; gap: 15px; flex-wrap: wrap; }
+        .stat-item { padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        .delete-project { background: #F44336; color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .filter-section { background: #f5f5f5; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        .filter-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .new-project-button { background: #FF5722; color: white; padding: 12px 25px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-bottom: 20px; }
+        .new-project-button:hover { background: #E64A19; }
+        .timeline { position: relative; padding-left: 30px; }
+        .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: #FF9800; }
+        .timeline-item { position: relative; padding-bottom: 20px; }
+        .timeline-item::before { content: ''; position: absolute; left: -25px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: #FF9800; border: 2px solid white; box-shadow: 0 0 0 2px #FF9800; }
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            h1 { font-size: 20px; }
+            .radio-group { flex-direction: column; gap: 10px; }
+            .photo-item { width: 100%; height: 200px; }
+            .tabs { gap: 5px; }
+            .tab { padding: 10px 15px; font-size: 14px; }
+            .item-title { padding-right: 10px; }
+            .status-badge { position: static; display: inline-block; margin-bottom: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏗️ SiGeKompass - Sicherheits-Checklisten</h1>
+        <div class="subtitle">Modul: <strong>Erd-, Tief- & Gründungsarbeiten</strong> | SiGeKompass 1.2</div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(event, 'checklist')">📋 Checkliste</button>
+            <button class="tab" onclick="switchTab(event, 'history')">📜 Verlauf</button>
+            <button class="tab" onclick="switchTab(event, 'projects')">📁 Projekte</button>
+        </div>
+
+        <div id="tab-checklist" class="tab-content active">
+            <div class="project-info">
+                <h3>Projektinformationen</h3>
+                <div class="field-group">
+                    <label>Projekt / Bereich:</label>
+                    <input type="text" id="projectName" placeholder="Name des Projekts oder Bereichs">
+                </div>
+                <div class="field-group">
+                    <label>Revision / Datum:</label>
+                    <input type="date" id="revisionDate">
+                </div>
+                <div class="field-group">
+                    <label>Projekt-ID:</label>
+                    <input type="text" id="projectId" readonly>
+                </div>
+            </div>
+            <div id="checklistContainer"></div>
+            <button class="save-button" onclick="saveChecklist()">💾 Checkliste Speichern</button>
+            <button class="export-button" onclick="exportPDF()">📄 Als PDF Exportieren</button>
+        </div>
+
+        <div id="tab-history" class="tab-content">
+            <div class="filter-section">
+                <h3>Filter</h3>
+                <div class="filter-group">
+                    <select id="filterProject" onchange="filterHistory()"><option value="">Alle Projekte</option></select>
+                    <select id="filterStatus" onchange="filterHistory()">
+                        <option value="">Alle Status</option>
+                        <option value="offen">Offen</option>
+                        <option value="erfuellt">Erfüllt</option>
+                        <option value="nicht-erfuellt">Nicht Erfüllt</option>
+                        <option value="nicht-anwendbar">Nicht Anwendbar</option>
+                    </select>
+                    <input type="date" id="filterDateFrom" onchange="filterHistory()">
+                    <input type="date" id="filterDateTo" onchange="filterHistory()">
+                </div>
+            </div>
+            <div id="historyContainer" class="history-list"></div>
+        </div>
+
+        <div id="tab-projects" class="tab-content">
+            <button class="new-project-button" onclick="createNewProject()">➕ Neues Projekt Erstellen</button>
+            <div id="projectsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const checklistData = [
+            {
+                code: "EL-E02",
+                category: "E02 · Erdarbeiten / Baugrube",
+                reference: "DGUV Vorschrift 38, Abschnitt Baugruben/Gräben; BetrSichV §§3–4; TRBS 2111; ArbSchG §8",
+                docAssignment: "SiGePlan · Projektakte · Unterrichtung · Unterlage für spätere Arbeiten",
+                items: [
+                    { id: "E02-01", title: "01 Baugrund, Leitungen und Grubensicherung klären", phase: "Planung", description: "Leitungsauskunft und Baugrundbefund gegen Aushubbereich prüfen; Böschung oder Verbau, Randlasten und Zugang festlegen.", evidence: "Leitungsauskunft und freigegebener Verbau-/Böschungsplan" },
+                    { id: "E02-02", title: "02 Baugrube vor Zutritt überprüfen", phase: "Ausführung", description: "Ausgeführte Sicherung, Randabsperrung, Zugänge, Wasserzutritt und Maschinenabstand prüfen; nach relevanten Veränderungen erneut kontrollieren.", evidence: "Kontroll-/Übergabeprotokoll der Baugrube" },
+                    { id: "E02-03", title: "03 Gemeinsame Einrichtungen und Übergabe prüfen", phase: "Planung", description: "Für Grubensicherung, sichere Zugänge, Randabsperrung und getrennte Verkehrswege Standort, Nutzer, Zeitfenster, Bereitstellung/Pflege und Prüfverantwortung mit den Folgegewerken abstimmen.", evidence: "Abgestimmter Einrichtungs-/Übergabeplan" },
+                    { id: "E02-04", title: "04 Spätere Arbeiten und Zugänge prüfen (RAB 32)", phase: "Planung", description: "Lage und Tiefe der Leitungen, verbleibende Bauteile und sichere Zugänge für spätere Aufgrabungen dokumentieren. Bauteil, vorhersehbare Tätigkeit, sicheren Zugang, Intervall und Empfänger konkret abgleichen.", evidence: "Bauteilbezogene Unterlage und Bestandspläne" }
+                ]
+            },
+            {
+                code: "EL-E03",
+                category: "E03 · Verbau / Spezialtiefbau",
+                reference: "DGUV Vorschrift 38, Abschnitt Baugruben/Gräben; BetrSichV §§3–4; TRBS 2111; ArbSchG §8",
+                docAssignment: "SiGePlan · Projektakte · Unterrichtung · Unterlage für spätere Arbeiten",
+                items: [
+                    { id: "E03-01", title: "01 Verbauverfahren und Nachbarlasten abstimmen", phase: "Planung", description: "Einbau-/Rückbaureihenfolge, Nachbarbauwerke, Erschütterungen und Tragfähigkeitsnachweis mit Fachplaner abstimmen.", evidence: "Verbauplanung und Montagefolge" },
+                    { id: "E03-02", title: "02 Verbauzustand und Arbeitsbereich prüfen", phase: "Ausführung", description: "Abweichungen zur Planung, Verformungen, Zugänge und abgesperrte Gefahrenzone vor Nutzung prüfen.", evidence: "Prüf-/Abnahmeprotokoll des Verbaus" },
+                    { id: "E03-03", title: "03 Gemeinsame Einrichtungen und Übergabe prüfen", phase: "Planung", description: "Für Grubensicherung, sichere Zugänge, Randabsperrung und getrennte Verkehrswege Standort, Nutzer, Zeitfenster, Bereitstellung/Pflege und Prüfverantwortung mit den Folgegewerken abstimmen.", evidence: "Abgestimmter Einrichtungs-/Übergabeplan" },
+                    { id: "E03-04", title: "04 Spätere Arbeiten und Zugänge prüfen (RAB 32)", phase: "Planung", description: "Lage und Tiefe der Leitungen, verbleibende Bauteile und sichere Zugänge für spätere Aufgrabungen dokumentieren. Bauteil, vorhersehbare Tätigkeit, sicheren Zugang, Intervall und Empfänger konkret abgleichen.", evidence: "Bauteilbezogene Unterlage und Bestandspläne" }
+                ]
+            },
+            {
+                code: "EL-E04",
+                category: "E04 · Gründung",
+                reference: "DGUV Vorschrift 38, Abschnitt Baugruben/Gräben; BetrSichV §§3–4; TRBS 2111; ArbSchG §8",
+                docAssignment: "SiGePlan · Projektakte · Unterrichtung · Unterlage für spätere Arbeiten",
+                items: [
+                    { id: "E04-01", title: "01 Gründungsablauf und Tragfähigkeit planen", phase: "Planung", description: "Baugrund, Aufstellflächen, Bewehrung und Reihenfolge gegenüber Tiefbau und Folgegewerken abstimmen.", evidence: "Gründungs-/Baugrundplanung und Ablaufplan" },
+                    { id: "E04-02", title: "02 Gründungsbereich zur Ausführung übergeben", phase: "Ausführung", description: "Grubenränder, offene Bewehrung, Maschinenstandflächen und sichere Zugänge kontrollieren.", evidence: "Übergabeprotokoll mit festgestellten Abweichungen" },
+                    { id: "E04-03", title: "03 Gemeinsame Einrichtungen und Übergabe prüfen", phase: "Planung", description: "Für Grubensicherung, sichere Zugänge, Randabsperrung und getrennte Verkehrswege Standort, Nutzer, Zeitfenster, Bereitstellung/Pflege und Prüfverantwortung mit den Folgegewerken abstimmen.", evidence: "Abgestimmter Einrichtungs-/Übergabeplan" },
+                    { id: "E04-04", title: "04 Spätere Arbeiten und Zugänge prüfen (RAB 32)", phase: "Planung", description: "Lage und Tiefe der Leitungen, verbleibende Bauteile und sichere Zugänge für spätere Aufgrabungen dokumentieren. Bauteil, vorhersehbare Tätigkeit, sicheren Zugang, Intervall und Empfänger konkret abgleichen.", evidence: "Bauteilbezogene Unterlage und Bestandspläne" }
+                ]
+            },
+            {
+                code: "EL-E05",
+                category: "E05 · Entwässerung / Kanal",
+                reference: "BioStoffV §§3–4 und Schutzpflichten; TRBA 400/500; BaustellV Anhang II Nr.2a nur bei Exposition RG3/4",
+                docAssignment: "SiGePlan · Projektakte · Unterrichtung · Unterlage für spätere Arbeiten",
+                items: [
+                    { id: "E05-01", title: "01 Kanal- und Schachtarbeiten beurteilen", phase: "Planung", description: "Leitungen, Grabenstabilität, Atmosphäre, Wasserzufluss und erforderliche Rettung für den tatsächlichen Arbeitsraum bewerten.", evidence: "Arbeits-/Rettungskonzept und Leitungsauskunft" },
+                    { id: "E05-02", title: "02 Zugang zu Kanal oder Schacht kontrollieren", phase: "Ausführung", description: "Sicherung, Absperrung, erforderliche Messungen, Lüftung und Rettungsmittel anhand des Konzepts kontrollieren.", evidence: "Zugangsfreigabe und gegebenenfalls Messprotokoll" },
+                    { id: "E05-03", title: "03 Gemeinsame Einrichtungen und Übergabe prüfen", phase: "Planung", description: "Für Hygienebereich, Trennung, Reinigung und ggf. Lüftung Standort, Nutzer, Zeitfenster, Bereitstellung/Pflege und Prüfverantwortung mit den Folgegewerken abstimmen.", evidence: "Abgestimmter Einrichtungs-/Übergabeplan" },
+                    { id: "E05-04", title: "04 Spätere Arbeiten und Zugänge prüfen (RAB 32)", phase: "Planung", description: "Sicheren Zugang und relevante Bestandsinformationen für Wartung und Instandsetzung dokumentieren. Bauteil, vorhersehbare Tätigkeit, sicheren Zugang, Intervall und Empfänger konkret abgleichen.", evidence: "Bauteilbezogene Unterlage und Bestandspläne" }
+                ]
+            },
+            {
+                code: "EL-E35",
+                category: "E35 · Brunnen / Tunnel / unterirdische Arbeiten",
+                reference: "BaustellV Anhang II Nr.6; DGUV Vorschrift 38; BetrSichV; GefStoffV nach Exposition",
+                docAssignment: "SiGePlan · Projektakte · Unterrichtung · Unterlage für spätere Arbeiten",
+                items: [
+                    { id: "E35-01", title: "01 Untertagebetrieb und Rettung planen", phase: "Planung", description: "Baugrund, Wasser, Atmosphäre, Lüftung, Flucht- und Rettungswege für das Verfahren beurteilen.", evidence: "Untertage-/Lüftungs-/Rettungskonzept" },
+                    { id: "E35-02", title: "02 Untertagezugang kontrollieren", phase: "Ausführung", description: "Sicherung, Lüftung, erforderliche Messungen, Kommunikationsmittel und Rettungsbereitschaft kontrollieren.", evidence: "Zugangsfreigabe und Kontroll-/Messbelege" },
+                    { id: "E35-03", title: "03 Gemeinsame Einrichtungen und Übergabe prüfen", phase: "Planung", description: "Für Zugangskontrolle, Belüftung, Kommunikation und Rettung Standort, Nutzer, Zeitfenster, Bereitstellung/Pflege und Prüfverantwortung mit den Folgegewerken abstimmen.", evidence: "Abgestimmter Einrichtungs-/Übergabeplan" },
+                    { id: "E35-04", title: "04 Spätere Arbeiten und Zugänge prüfen (RAB 32)", phase: "Planung", description: "Sicheren Zugang und relevante Bestandsinformationen für Wartung und Instandsetzung dokumentieren. Bauteil, vorhersehbare Tätigkeit, sicheren Zugang, Intervall und Empfänger konkret abgleichen.", evidence: "Bauteilbezogene Unterlage und Bestandspläne" }
+                ]
+            }
+        ];
+
+        let currentProjectId = null;
+        let allHistory = [];
+
+        function init() {
+            loadAllHistory();
+            generateProjectId();
+            renderChecklist();
+            renderProjects();
+            renderHistory();
+            updateFilterOptions();
+            document.getElementById('revisionDate').valueAsDate = new Date();
+        }
+
+        function generateProjectId() {
+            currentProjectId = 'PRJ-ETG-' + Date.now();
+            document.getElementById('projectId').value = currentProjectId;
+        }
+
+        function createNewProject() {
+            if (confirm('Möchten Sie ein neues Projekt erstellen? Nicht gespeicherte Änderungen gehen verloren.')) {
+                generateProjectId();
+                document.getElementById('projectName').value = '';
+                document.getElementById('revisionDate').valueAsDate = new Date();
+                renderChecklist();
+                document.querySelector('.tab').click();
+            }
+        }
+
+        function loadProject(projectId) {
+            const history = allHistory.filter(h => h.projectId === projectId);
+            if (history.length === 0) return;
+            const latestEntry = history[history.length - 1];
+            currentProjectId = projectId;
+            document.getElementById('projectId').value = projectId;
+            document.getElementById('projectName').value = latestEntry.projectName;
+            document.getElementById('revisionDate').value = latestEntry.revisionDate;
+            renderChecklist(latestEntry.data);
+            document.querySelector('.tab').click();
+        }
+
+        function switchTab(event, tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+            if (tabName === 'history') { renderHistory(); updateFilterOptions(); }
+            else if (tabName === 'projects') { renderProjects(); }
+        }
+
+        function renderChecklist(savedData = null) {
+            const container = document.getElementById('checklistContainer');
+            container.innerHTML = '';
+            checklistData.forEach((section, sectionIndex) => {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'checklist-section';
+                sectionDiv.innerHTML = `
+                    <div class="section-header" onclick="toggleSection(${sectionIndex})">
+                        <div><strong>${section.category}</strong> <small>(${section.code})</small><br>
+                        <small>Bezug: ${section.reference}</small><br>
+                        <small>Dokumentzuordnung: ${section.docAssignment}</small></div>
+                        <span id="arrow-${sectionIndex}">▼</span>
+                    </div>
+                    <div class="section-content" id="section-${sectionIndex}">
+                        <div class="applicability-section">
+                            <label>Anwendbarkeit:</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="applicability-${sectionIndex}" value="ja"> ✓ Ja</label>
+                                <label><input type="radio" name="applicability-${sectionIndex}" value="nein"> ✗ Nein</label>
+                                <label><input type="radio" name="applicability-${sectionIndex}" value="zu-klaeren"> ? Zu klären</label>
+                            </div>
+                            <input type="text" id="app-reason-${sectionIndex}" placeholder="Begründung">
+                        </div>
+                        ${section.items.map((item, itemIndex) => createItemHTML(item, sectionIndex, itemIndex)).join('')}
+                        <div class="field-group">
+                            <label>Prüfung / Freigabe:</label>
+                            <input type="text" id="approval-${sectionIndex}" placeholder="Name des Verantwortlichen">
+                        </div>
+                        <div class="field-group">
+                            <label>Datum / Unterschrift:</label>
+                            <input type="date" id="approval-date-${sectionIndex}">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(sectionDiv);
+            });
+            if (savedData) loadSavedData(savedData);
+        }
+
+        function createItemHTML(item, sectionIndex, itemIndex) {
+            const itemId = `item-${sectionIndex}-${itemIndex}`;
+            const fullItemId = `${checklistData[sectionIndex].code}-${item.id}`;
+            const itemHistory = getItemHistory(fullItemId);
+            const currentStatus = itemHistory.length > 0 ? itemHistory[itemHistory.length - 1].status : '';
+            const statusBadge = getStatusBadge(currentStatus);
+            const phaseClass = item.phase === 'Planung' ? 'phase-planung' : 'phase-ausfuehrung';
+            
+            return `
+                <div class="checklist-item">
+                    ${statusBadge}
+                    <div class="item-title">${item.title} <span class="phase-badge ${phaseClass}">[${item.phase}]</span></div>
+                    <div class="item-description">${item.description}</div>
+                    <div><small><strong>Nachweis:</strong> ${item.evidence}</small></div>
+                    <div class="status-group">
+                        <label>Status:</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="status-${itemId}" value="offen" onchange="handleStatusChange('${itemId}')"> ⭕ Offen</label>
+                            <label><input type="radio" name="status-${itemId}" value="erfuellt" onchange="handleStatusChange('${itemId}')"> ✅ Erfüllt</label>
+                            <label><input type="radio" name="status-${itemId}" value="nicht-erfuellt" onchange="handleStatusChange('${itemId}')"> ❌ Nicht erfüllt</label>
+                            <label><input type="radio" name="status-${itemId}" value="nicht-anwendbar" onchange="handleStatusChange('${itemId}')"> ➖ Nicht anwendbar</label>
+                        </div>
+                    </div>
+                    <div class="action-plan" id="action-${itemId}">
+                        <label><strong>📝 Maßnahmenplan zur Korrektur:</strong></label>
+                        <textarea id="action-text-${itemId}" placeholder="Beschreiben Sie die notwendigen Maßnahmen zur Korrektur..."></textarea>
+                    </div>
+                    <div class="field-group"><label>Verantwortlich:</label><input type="text" id="responsible-${itemId}" placeholder="Name des Verantwortlichen"></div>
+                    <div class="field-group"><label>Frist:</label><input type="date" id="deadline-${itemId}"></div>
+                    <div class="field-group"><label>Geprüft am:</label><input type="date" id="checked-${itemId}"></div>
+                    <div class="field-group"><label>Nachweis / Ablage / Maßnahmen / Begründung:</label><textarea id="notes-${itemId}" placeholder="Zusätzliche Bemerkungen..."></textarea></div>
+                    <div class="photo-section">
+                        <label><strong>📸 Fotografische Nachweise:</strong></label>
+                        <button class="photo-button" onclick="capturePhoto('${itemId}')">📷 Foto Aufnehmen</button>
+                        <input type="file" id="file-${itemId}" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto('${itemId}', event)">
+                        <div class="photo-preview" id="photos-${itemId}"></div>
+                    </div>
+                    ${itemHistory.length > 0 ? `
+                        <div class="history-section">
+                            <strong>📜 Verlauf (${itemHistory.length} Einträge)</strong>
+                            <button class="history-toggle" onclick="toggleItemHistory('${itemId}')">Verlauf anzeigen/verbergen</button>
+                            <div id="item-history-${itemId}" style="display:none; margin-top:10px;">
+                                <div class="timeline">
+                                    ${itemHistory.map(h => `
+                                        <div class="timeline-item">
+                                            <div class="history-entry">
+                                                <div class="history-header">
+                                                    <span>${getStatusIcon(h.status)} ${getStatusText(h.status)}</span>
+                                                    <span>${new Date(h.timestamp).toLocaleString('de-DE')}</span>
+                                                </div>
+                                                <div class="history-content">
+                                                    ${h.responsible ? `<strong>Verantwortlich:</strong> ${h.responsible}<br>` : ''}
+                                                    ${h.notes ? `<strong>Bemerkung:</strong> ${h.notes}<br>` : ''}
+                                                    ${h.actionPlan ? `<strong>Maßnahmen:</strong> ${h.actionPlan}<br>` : ''}
+                                                    ${h.photos && h.photos.length > 0 ? `<strong>Fotos:</strong> ${h.photos.length}<br>` : ''}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).reverse().join('')}
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function getStatusBadge(status) {
+            if (!status) return '';
+            const badges = {
+                'offen': '<span class="status-badge status-offen">Offen</span>',
+                'erfuellt': '<span class="status-badge status-erfuellt">Erfüllt</span>',
+                'nicht-erfuellt': '<span class="status-badge status-nicht-erfuellt">Nicht erfüllt</span>',
+                'nicht-anwendbar': '<span class="status-badge status-nicht-anwendbar">Nicht anwendbar</span>'
+            };
+            return badges[status] || '';
+        }
+
+        function getStatusIcon(status) {
+            const icons = { 'offen': '⭕', 'erfuellt': '✅', 'nicht-erfuellt': '❌', 'nicht-anwendbar': '➖' };
+            return icons[status] || '⭕';
+        }
+
+        function getStatusText(status) {
+            const texts = { 'offen': 'Offen', 'erfuellt': 'Erfüllt', 'nicht-erfuellt': 'Nicht erfüllt', 'nicht-anwendbar': 'Nicht anwendbar' };
+            return texts[status] || 'Unbekannt';
+        }
+
+        function toggleItemHistory(itemId) {
+            const historyDiv = document.getElementById(`item-history-${itemId}`);
+            historyDiv.style.display = historyDiv.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function handleStatusChange(itemId) {
+            const status = getRadioValue(`status-${itemId}`);
+            const actionPlan = document.getElementById(`action-${itemId}`);
+            if (status === 'nicht-erfuellt') { actionPlan.classList.add('show'); }
+            else { actionPlan.classList.remove('show'); }
+        }
+
+        function toggleSection(index) {
+            const content = document.getElementById(`section-${index}`);
+            const arrow = document.getElementById(`arrow-${index}`);
+            if (content.classList.contains('active')) {
+                content.classList.remove('active');
+                arrow.textContent = '▼';
+            } else {
+                content.classList.add('active');
+                arrow.textContent = '▲';
+            }
+        }
+
+        function capturePhoto(itemId) {
+            document.getElementById(`file-${itemId}`).click();
+        }
+
+        function handlePhoto(itemId, event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                getLocation(function(position) {
+                    addPhotoPreview(itemId, e.target.result, position);
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function getLocation(callback) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => callback(position),
+                    () => callback(null),
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            } else {
+                callback(null);
+            }
+        }
+
+        function addPhotoPreview(itemId, imageData, position) {
+            const container = document.getElementById(`photos-${itemId}`);
+            const photoDiv = document.createElement('div');
+            photoDiv.className = 'photo-item';
+            const now = new Date();
+            const dateTime = now.toLocaleString('de-DE');
+            const coords = position ? `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}` : 'Standort nicht verfügbar';
+            photoDiv.innerHTML = `
+                <img src="${imageData}" alt="Nachweis">
+                <div class="photo-info">📅 ${dateTime}<br>📍 ${coords}</div>
+                <button class="remove-photo" onclick="this.parentElement.remove()">×</button>
+            `;
+            container.appendChild(photoDiv);
+        }
+
+        function saveChecklist() {
+            const projectName = document.getElementById('projectName').value;
+            const revisionDate = document.getElementById('revisionDate').value;
+            if (!projectName || !revisionDate) { alert('⚠️ Bitte füllen Sie Projektname und Datum aus.'); return; }
+            const data = collectChecklistData();
+            const historyEntry = {
+                projectId: currentProjectId,
+                projectName: projectName,
+                revisionDate: revisionDate,
+                timestamp: new Date().toISOString(),
+                data: data,
+                user: 'Benutzer'
+            };
+            allHistory.push(historyEntry);
+            saveAllHistory();
+            alert('✅ Checkliste erfolgreich gespeichert!');
+            renderProjects();
+            updateFilterOptions();
+            renderChecklist(data);
+        }
+
+        function collectChecklistData() {
+            const data = { sections: [] };
+            checklistData.forEach((section, sectionIndex) => {
+                const sectionData = {
+                    code: section.code,
+                    category: section.category,
+                    applicability: getRadioValue(`applicability-${sectionIndex}`),
+                    applicabilityReason: document.getElementById(`app-reason-${sectionIndex}`)?.value || '',
+                    approval: document.getElementById(`approval-${sectionIndex}`)?.value || '',
+                    approvalDate: document.getElementById(`approval-date-${sectionIndex}`)?.value || '',
+                    items: []
+                };
+                section.items.forEach((item, itemIndex) => {
+                    const itemId = `item-${sectionIndex}-${itemIndex}`;
+                    const fullItemId = `${section.code}-${item.id}`;
+                    const status = getRadioValue(`status-${itemId}`);
+                    const itemData = {
+                        id: item.id,
+                        fullId: fullItemId,
+                        title: item.title,
+                        status: status,
+                        actionPlan: document.getElementById(`action-text-${itemId}`)?.value || '',
+                        responsible: document.getElementById(`responsible-${itemId}`)?.value || '',
+                        deadline: document.getElementById(`deadline-${itemId}`)?.value || '',
+                        checked: document.getElementById(`checked-${itemId}`)?.value || '',
+                        notes: document.getElementById(`notes-${itemId}`)?.value || '',
+                        photos: getPhotos(itemId)
+                    };
+                    sectionData.items.push(itemData);
+                    if (status) addToHistory(fullItemId, itemData);
+                });
+                data.sections.push(sectionData);
+            });
+            return data;
+        }
+
+        function getRadioValue(name) {
+            const radios = document.getElementsByName(name);
+            for (let radio of radios) {
+                if (radio.checked) return radio.value;
+            }
+            return '';
+        }
+
+        function getPhotos(itemId) {
+            const container = document.getElementById(`photos-${itemId}`);
+            if (!container) return [];
+            const photos = [];
+            container.querySelectorAll('.photo-item').forEach(photoDiv => {
+                const img = photoDiv.querySelector('img');
+                const info = photoDiv.querySelector('.photo-info');
+                if (img && info) photos.push({ data: img.src, info: info.innerText });
+            });
+            return photos;
+        }
+
+        function addToHistory(itemId, itemData) {
+            const historyKey = `history_${currentProjectId}_${itemId}`;
+            let itemHistory = JSON.parse(localStorage.getItem(historyKey) || '[]');
+            const last = itemHistory[itemHistory.length - 1];
+            if (last && last.status === itemData.status && last.notes === itemData.notes && 
+                last.actionPlan === itemData.actionPlan && last.responsible === itemData.responsible) return;
+            itemHistory.push({
+                timestamp: new Date().toISOString(),
+                status: itemData.status,
+                responsible: itemData.responsible,
+                notes: itemData.notes,
+                actionPlan: itemData.actionPlan,
+                photos: itemData.photos
+            });
+            localStorage.setItem(historyKey, JSON.stringify(itemHistory));
+        }
+
+        function getItemHistory(itemId) {
+            const historyKey = `history_${currentProjectId}_${itemId}`;
+            return JSON.parse(localStorage.getItem(historyKey) || '[]');
+        }
+
+        function saveAllHistory() {
+            localStorage.setItem('allHistory_ETG', JSON.stringify(allHistory));
+        }
+
+        function loadAllHistory() {
+            allHistory = JSON.parse(localStorage.getItem('allHistory_ETG') || '[]');
+        }
+
+        function loadSavedData(data) {
+            if (!data || !data.sections) return;
+            data.sections.forEach((sectionData, sectionIndex) => {
+                setRadioValue(`applicability-${sectionIndex}`, sectionData.applicability);
+                setValue(`app-reason-${sectionIndex}`, sectionData.applicabilityReason);
+                setValue(`approval-${sectionIndex}`, sectionData.approval);
+                setValue(`approval-date-${sectionIndex}`, sectionData.approvalDate);
+                sectionData.items.forEach((itemData, itemIndex) => {
+                    const itemId = `item-${sectionIndex}-${itemIndex}`;
+                    setRadioValue(`status-${itemId}`, itemData.status);
+                    setValue(`action-text-${itemId}`, itemData.actionPlan);
+                    setValue(`responsible-${itemId}`, itemData.responsible);
+                    setValue(`deadline-${itemId}`, itemData.deadline);
+                    setValue(`checked-${itemId}`, itemData.checked);
+                    setValue(`notes-${itemId}`, itemData.notes);
+                    if (itemData.photos && itemData.photos.length > 0) {
+                        const photosContainer = document.getElementById(`photos-${itemId}`);
+                        if (photosContainer) {
+                            photosContainer.innerHTML = '';
+                            itemData.photos.forEach(photo => {
+                                const photoDiv = document.createElement('div');
+                                photoDiv.className = 'photo-item';
+                                photoDiv.innerHTML = `<img src="${photo.data}" alt="Nachweis"><div class="photo-info">${photo.info}</div><button class="remove-photo" onclick="this.parentElement.remove()">×</button>`;
+                                photosContainer.appendChild(photoDiv);
+                            });
+                        }
+                    }
+                    if (itemData.status === 'nicht-erfuellt') document.getElementById(`action-${itemId}`)?.classList.add('show');
+                });
+            });
+        }
+
+        function setRadioValue(name, value) {
+            if (!value) return;
+            const radios = document.getElementsByName(name);
+            radios.forEach(radio => { if (radio.value === value) radio.checked = true; });
+        }
+
+        function setValue(id, value) {
+            const element = document.getElementById(id);
+            if (element) element.value = value || '';
+        }
+
+        function renderProjects() {
+            const container = document.getElementById('projectsContainer');
+            const projects = {};
+            allHistory.forEach(entry => {
+                if (!projects[entry.projectId]) {
+                    projects[entry.projectId] = { projectId: entry.projectId, projectName: entry.projectName, lastUpdate: entry.timestamp, entries: [] };
+                }
+                projects[entry.projectId].entries.push(entry);
+                if (entry.timestamp > projects[entry.projectId].lastUpdate) {
+                    projects[entry.projectId].lastUpdate = entry.timestamp;
+                    projects[entry.projectId].projectName = entry.projectName;
+                }
+            });
+            const projectArray = Object.values(projects).sort((a, b) => new Date(b.lastUpdate) - new Date(a.lastUpdate));
+            if (projectArray.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#999;">Keine Projekte vorhanden. Erstellen Sie ein neues Projekt.</p>';
+                return;
+            }
+            container.innerHTML = projectArray.map(project => {
+                const stats = calculateProjectStats(project.entries[project.entries.length - 1].data);
+                return `
+                    <div class="project-card" onclick="loadProject('${project.projectId}')">
+                        <div class="project-card-header">
+                            <div>
+                                <div class="project-card-title">${project.projectName}</div>
+                                <div class="project-card-date">Letzte Aktualisierung: ${new Date(project.lastUpdate).toLocaleString('de-DE')}</div>
+                                <div class="project-card-date">ID: ${project.projectId}</div>
+                            </div>
+                            <button class="delete-project" onclick="deleteProject('${project.projectId}', event)">🗑️ Löschen</button>
+                        </div>
+                        <div class="project-card-stats">
+                            <span class="stat-item status-erfuellt">✅ ${stats.erfuellt} Erfüllt</span>
+                            <span class="stat-item status-offen">⭕ ${stats.offen} Offen</span>
+                            <span class="stat-item status-nicht-erfuellt">❌ ${stats.nichtErfuellt} Nicht erfüllt</span>
+                            <span class="stat-item status-nicht-anwendbar">➖ ${stats.nichtAnwendbar} Nicht anwendbar</span>
+                            <span class="stat-item" style="background:#FF9800; color:white;">📜 ${project.entries.length} Einträge</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function calculateProjectStats(data) {
+            const stats = { erfuellt: 0, offen: 0, nichtErfuellt: 0, nichtAnwendbar: 0 };
+            if (data && data.sections) {
+                data.sections.forEach(section => {
+                    section.items.forEach(item => {
+                        if (item.status === 'erfuellt') stats.erfuellt++;
+                        else if (item.status === 'offen') stats.offen++;
+                        else if (item.status === 'nicht-erfuellt') stats.nichtErfuellt++;
+                        else if (item.status === 'nicht-anwendbar') stats.nichtAnwendbar++;
+                    });
+                });
+            }
+            return stats;
+        }
+
+        function deleteProject(projectId, event) {
+            event.stopPropagation();
+            if (confirm('Möchten Sie dieses Projekt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+                allHistory = allHistory.filter(h => h.projectId !== projectId);
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith(`history_${projectId}_`)) localStorage.removeItem(key);
+                });
+                saveAllHistory();
+                renderProjects();
+                updateFilterOptions();
+                alert('✅ Projekt gelöscht.');
+            }
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyContainer');
+            if (allHistory.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#999;">Kein Verlauf vorhanden.</p>';
+                return;
+            }
+            const filteredHistory = filterHistoryData();
+            container.innerHTML = filteredHistory.reverse().map(entry => {
+                const stats = calculateProjectStats(entry.data);
+                return `
+                    <div class="history-entry">
+                        <div class="history-header">
+                            <div><strong>${entry.projectName}</strong><br><small>ID: ${entry.projectId}</small></div>
+                            <div>${new Date(entry.timestamp).toLocaleString('de-DE')}<br><small>von ${entry.user}</small></div>
+                        </div>
+                        <div class="history-content">
+                            <strong>Revisionsdatum:</strong> ${new Date(entry.revisionDate).toLocaleDateString('de-DE')}<br>
+                            <div style="margin-top:10px;">
+                                <span class="stat-item status-erfuellt">✅ ${stats.erfuellt}</span>
+                                <span class="stat-item status-offen">⭕ ${stats.offen}</span>
+                                <span class="stat-item status-nicht-erfuellt">❌ ${stats.nichtErfuellt}</span>
+                                <span class="stat-item status-nicht-anwendbar">➖ ${stats.nichtAnwendbar}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterHistoryData() {
+            let filtered = [...allHistory];
+            const projectFilter = document.getElementById('filterProject').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            const dateFrom = document.getElementById('filterDateFrom').value;
+            const dateTo = document.getElementById('filterDateTo').value;
+            if (projectFilter) filtered = filtered.filter(h => h.projectId === projectFilter);
+            if (dateFrom) filtered = filtered.filter(h => h.timestamp >= new Date(dateFrom).toISOString());
+            if (dateTo) {
+                const endOfDay = new Date(dateTo);
+                endOfDay.setHours(23, 59, 59, 999);
+                filtered = filtered.filter(h => h.timestamp <= endOfDay.toISOString());
+            }
+            if (statusFilter) {
+                filtered = filtered.filter(entry => {
+                    if (!entry.data || !entry.data.sections) return false;
+                    return entry.data.sections.some(section => section.items.some(item => item.status === statusFilter));
+                });
+            }
+            return filtered;
+        }
+
+        function filterHistory() { renderHistory(); }
+
+        function updateFilterOptions() {
+            const projectFilter = document.getElementById('filterProject');
+            const projects = {};
+            allHistory.forEach(entry => { projects[entry.projectId] = entry.projectName; });
+            const currentValue = projectFilter.value;
+            projectFilter.innerHTML = '<option value="">Alle Projekte</option>';
+            Object.entries(projects).forEach(([id, name]) => {
+                projectFilter.innerHTML += `<option value="${id}">${name}</option>`;
+            });
+            projectFilter.value = currentValue;
+        }
+
+        function exportPDF() {
+            alert('📄 PDF-Export-Funktion:\n\nDiese Funktion würde mit jsPDF implementiert werden.\n\nExportiert würden:\n- Projektinformationen\n- Alle Checklistenpunkte (E02, E03, E04, E05, E35)\n- Status und Bemerkungen\n- Fotos mit Georeferenzierung\n- Verlaufshistorie');
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
